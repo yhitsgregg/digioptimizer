@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shake &mdash; Random 1 to 10</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --ink: #1c1d21;
+    --muted: #6b6f76;
+    --accent: #3d5afe;
+    --line: #e2e4e9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16171a;
+      --card: #202226;
+      --ink: #f2f3f5;
+      --muted: #9aa0a8;
+      --accent: #7c8cff;
+      --line: #32353b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 24px;
+  }
+  .app {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 32px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 12px 32px rgba(0,0,0,.08);
+  }
+  h1 { margin: 0 0 4px; font-size: 1.25rem; }
+  .sub { margin: 0 0 24px; color: var(--muted); font-size: .875rem; }
+  #result {
+    font-size: 5.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    min-height: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  #result.empty { font-size: 1.5rem; font-weight: 500; color: var(--muted); }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    20% { transform: translateX(-10px) rotate(-4deg); }
+    40% { transform: translateX(9px) rotate(4deg); }
+    60% { transform: translateX(-6px) rotate(-2deg); }
+    80% { transform: translateX(4px) rotate(1deg); }
+  }
+  .shaking { animation: shake .45s ease; }
+  .buttons { display: flex; gap: 10px; margin-top: 20px; }
+  button {
+    flex: 1;
+    padding: 13px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: opacity .15s, transform .05s;
+  }
+  button:active:not(:disabled) { transform: scale(.98); }
+  #shake { background: var(--accent); color: #fff; }
+  #shake:disabled { opacity: .45; cursor: not-allowed; }
+  #reset { background: transparent; color: var(--ink); border-color: var(--line); }
+  .used-label {
+    margin: 24px 0 8px;
+    font-size: .75rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  #used { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chip {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    font-size: .875rem;
+    color: var(--muted);
+  }
+  .chip.drawn { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+</style>
+</head>
+<body>
+  <main class="app">
+    <h1>Shake</h1>
+    <p class="sub">A random number from 1 to 10 &mdash; never the same one twice.</p>
+
+    <div id="result" class="empty" aria-live="polite">Shake to start</div>
+
+    <div class="buttons">
+      <button id="shake" type="button">Shake</button>
+      <button id="reset" type="button">Reset</button>
+    </div>
+
+    <p class="used-label">Numbers drawn</p>
+    <div id="used"></div>
+  </main>
+
+<script>
+  const TOTAL = 10;
+  const resultEl = document.getElementById('result');
+  const shakeBtn = document.getElementById('shake');
+  const resetBtn = document.getElementById('reset');
+  const usedEl = document.getElementById('used');
+
+  let drawn = [];
+
+  function renderChips() {
+    usedEl.innerHTML = '';
+    for (let n = 1; n <= TOTAL; n++) {
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (drawn.includes(n) ? ' drawn' : '');
+      chip.textContent = n;
+      usedEl.appendChild(chip);
+    }
+  }
+
+  function remaining() {
+    const pool = [];
+    for (let n = 1; n <= TOTAL; n++) {
+      if (!drawn.includes(n)) pool.push(n);
+    }
+    return pool;
+  }
+
+  function shake() {
+    const pool = remaining();
+    if (pool.length === 0) return;
+
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    drawn.push(pick);
+
+    resultEl.classList.remove('empty', 'shaking');
+    void resultEl.offsetWidth; // restart the animation
+    resultEl.classList.add('shaking');
+    resultEl.textContent = pick;
+
+    renderChips();
+
+    if (remaining().length === 0) {
+      shakeBtn.disabled = true;
+      shakeBtn.textContent = 'All used';
+    }
+  }
+
+  function reset() {
+    drawn = [];
+    resultEl.textContent = 'Shake to start';
+    resultEl.classList.add('empty');
+    resultEl.classList.remove('shaking');
+    shakeBtn.disabled = false;
+    shakeBtn.textContent = 'Shake';
+    renderChips();
+  }
+
+  shakeBtn.addEventListener('click', shake);
+  resetBtn.addEventListener('click', reset);
+  renderChips();
+</script>
+</body>
+</html>
